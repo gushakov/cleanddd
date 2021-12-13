@@ -1,5 +1,7 @@
 package com.github.cleanddd.usecase;
 
+import com.github.cleanddd.dto.CreateCourseResponse;
+import com.github.cleanddd.dto.CreateStudentResponse;
 import com.github.cleanddd.model.Course;
 import com.github.cleanddd.model.EnrollResult;
 import com.github.cleanddd.model.Student;
@@ -25,13 +27,16 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
     public void createCourse(String title) {
 
         if (persistenceOps.courseExistsWithTitle(title)) {
-            restPresenter.presentOk(Map.of("exists", "already"));
+            restPresenter.presentOk(CreateCourseResponse.builder().existsAlready(true));
         } else {
             final Integer courseId = persistenceOps.persist(Course.builder()
                     .title(title)
                     .build());
 
-            restPresenter.presentOk(Map.of("courseId", courseId));
+            restPresenter.presentOk(CreateCourseResponse.builder()
+                    .existsAlready(false)
+                    .courseId(courseId)
+                    .build());
         }
     }
 
@@ -39,15 +44,16 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
     @Transactional
     public void createStudent(String fullName) {
 
-        if (persistenceOps.studentExistsWithFullName(fullName)){
-            restPresenter.presentOk(Map.of("exists", "already"));
-        }
-        else {
+        if (persistenceOps.studentExistsWithFullName(fullName)) {
+            restPresenter.presentOk(CreateStudentResponse.builder().existsAlready(true).build());
+        } else {
             final Integer studentId = persistenceOps.persist(Student.builder()
                     .fullName(fullName)
                     .build());
 
-            restPresenter.presentOk(Map.of("studentId", studentId));
+            restPresenter.presentOk(CreateStudentResponse.builder().existsAlready(false)
+                    .studentId(studentId)
+                    .build());
         }
     }
 
@@ -71,9 +77,7 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
             }
 
             // present the result of enrollment
-            restPresenter.presentOk(Map.of("studentId", studentId,
-                    "newEnrollment", enrollResult.isCourseAdded(),
-                    "coursesIds", enrollResult.getStudent().getCoursesIds()));
+            restPresenter.presentOk(enrollResult);
         } catch (Exception e) {
             restPresenter.presentError(e);
         }

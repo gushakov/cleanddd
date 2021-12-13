@@ -10,3 +10,5 @@ Here are some references and links which were used for this application:
     - Interesting question also involving academic domain
 
 2. [Transactional, roll back transaction manually](https://stackoverflow.com/a/23502214)
+
+3. [Baeldung, Jackson ignore null fields](https://www.baeldung.com/jackson-ignore-null-fields)
