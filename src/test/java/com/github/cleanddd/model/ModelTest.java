@@ -36,8 +36,6 @@ public class ModelTest {
         final EnrollResult enrollResult = studentBefore.enrollInCourse(1);
         final Student studentAfter = enrollResult.getStudent();
 
-//        assertThat(studentAfter.hashCode())
-//                .isNotEqualTo(studentBefore.hashCode());
         assertThat(studentBefore.getCoursesIds())
                 .isEmpty();
         assertThat(studentAfter.getCoursesIds())
