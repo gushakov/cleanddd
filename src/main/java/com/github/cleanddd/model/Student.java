@@ -42,7 +42,7 @@ public class Student {
                 .build();
     }
 
-    private StudentBuilder newStudent(){
+    private StudentBuilder newStudent() {
         return Student.builder()
                 .id(id)
                 .fullName(fullName)

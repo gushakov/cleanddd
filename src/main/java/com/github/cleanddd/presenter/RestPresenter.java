@@ -54,10 +54,9 @@ public class RestPresenter implements RestPresenterOutputPort {
         final DelegatingServerHttpResponse httpOutputMessage =
                 new DelegatingServerHttpResponse(new ServletServerHttpResponse(httpServletResponse));
 
-        if (t instanceof EntityDoesNotExistError){
+        if (t instanceof EntityDoesNotExistError) {
             httpOutputMessage.setStatusCode(HttpStatus.BAD_REQUEST);
-        }
-        else {
+        } else {
             httpOutputMessage.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 

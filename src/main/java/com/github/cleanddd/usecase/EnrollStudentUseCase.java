@@ -10,7 +10,6 @@ import com.github.cleanddd.port.PersistenceOperationsOutputPort;
 import com.github.cleanddd.port.RestPresenterOutputPort;
 
 import javax.transaction.Transactional;
-import java.util.Map;
 
 public class EnrollStudentUseCase implements EnrollStudentInputPort {
 

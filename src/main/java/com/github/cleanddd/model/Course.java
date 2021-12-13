@@ -37,7 +37,7 @@ public class Course {
         return newCourse().numberOfStudents(numberOfStudents.get() + 1).build();
     }
 
-    private CourseBuilder newCourse(){
+    private CourseBuilder newCourse() {
         return Course.builder()
                 .id(id)
                 .title(title)
