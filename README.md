@@ -2,6 +2,8 @@
 
 An example of a Clean architecture DDD application.
 
+Here is [the article](https://medium.com/@gushakov/2236f5430a05) which describes the ideas for this application.
+
 ### References
 
 Here are some references and links which were used for this application:
