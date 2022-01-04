@@ -34,7 +34,7 @@ public class Course {
     }
 
     public Course enrollStudent() {
-        return newCourse().numberOfStudents(numberOfStudents.get() + 1).build();
+        return newCourse().numberOfStudents(numberOfStudents.incrementAndGet()).build();
     }
 
     private CourseBuilder newCourse() {

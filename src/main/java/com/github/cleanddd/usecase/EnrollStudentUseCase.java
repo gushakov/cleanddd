@@ -72,7 +72,8 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
                 persistenceOps.persist(enrollResult.getStudent());
 
                 final Course course = persistenceOps.obtainCourseById(courseId);
-                persistenceOps.persist(course.enrollStudent());
+                final Course updatedCourse = course.enrollStudent();
+                persistenceOps.persist(updatedCourse);
             }
 
             // present the result of enrollment
