@@ -34,7 +34,8 @@ public class Course {
     }
 
     public Course enrollStudent() {
-        return newCourse().numberOfStudents(numberOfStudents.incrementAndGet()).build();
+        // notice that we are not mutating the instance counter here
+        return newCourse().numberOfStudents(numberOfStudents.get() + 1).build();
     }
 
     private CourseBuilder newCourse() {
