@@ -1,10 +1,11 @@
 package com.github.cleanddd.usecase;
 
-import com.github.cleanddd.model.Course;
-import com.github.cleanddd.model.EnrollResult;
-import com.github.cleanddd.model.Student;
-import com.github.cleanddd.port.PersistenceOperationsOutputPort;
-import com.github.cleanddd.port.RestPresenterOutputPort;
+import com.github.cleanddd.core.model.course.Course;
+import com.github.cleanddd.core.model.enrollment.EnrollResult;
+import com.github.cleanddd.core.model.student.Student;
+import com.github.cleanddd.core.port.db.PersistenceOperationsOutputPort;
+import com.github.cleanddd.core.usecase.enrollstudent.EnrollStudentPresenterOutputPort;
+import com.github.cleanddd.core.usecase.enrollstudent.EnrollStudentUseCase;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.*;
 public class EnrollStudentUseCaseTest {
 
     @Mock
-    private RestPresenterOutputPort presenter;
+    private EnrollStudentPresenterOutputPort presenter;
 
     @Mock
     private PersistenceOperationsOutputPort persistenceOps;
@@ -65,15 +66,15 @@ public class EnrollStudentUseCaseTest {
         // verify the result of enrollment
         final ArgumentCaptor<EnrollResult> resultArg = ArgumentCaptor.forClass(EnrollResult.class);
         verify(presenter, times(1))
-                .presentOk(resultArg.capture());
+                .presentResultOfSuccessfulEnrollment(resultArg.capture());
 
         final EnrollResult enrollResult = resultArg.getValue();
         Assertions.assertThat(enrollResult.isCourseAdded()).isTrue();
         Assertions.assertThat(enrollResult.getStudent().getCoursesIds())
-                .containsOnly(1,2,3,4);
+                .containsOnly(1, 2, 3, 4);
     }
 
     private void assertNoError() {
-        verify(presenter, times(0)).presentError(any(Throwable.class));
+        verify(presenter, times(0)).presentError(any(Exception.class));
     }
 }
