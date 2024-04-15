@@ -1,5 +1,8 @@
 package com.github.cleanddd.model;
 
+import com.github.cleanddd.core.model.InvalidDomainEntityError;
+import com.github.cleanddd.core.model.enrollment.EnrollResult;
+import com.github.cleanddd.core.model.student.Student;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -10,17 +13,17 @@ public class ModelTest {
     @Test
     void testStudentBuilder_ErrorIfBuildWithEmptyFullName() {
 
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(InvalidDomainEntityError.class,
                 () -> Student.builder().build());
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(InvalidDomainEntityError.class,
                 () -> Student.builder()
                         .fullName(null)
                         .build());
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(InvalidDomainEntityError.class,
                 () -> Student.builder()
                         .fullName("")
                         .build());
-        Assertions.assertThrows(IllegalArgumentException.class,
+        Assertions.assertThrows(InvalidDomainEntityError.class,
                 () -> Student.builder()
                         .fullName(" ")
                         .build());
