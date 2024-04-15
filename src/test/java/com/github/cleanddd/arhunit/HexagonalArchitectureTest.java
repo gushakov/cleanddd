@@ -30,7 +30,6 @@ public class HexagonalArchitectureTest {
             "",
             "java..",
             "javax..",
-            "org.slf4j..",
             "lombok..");
 
     private final DescribedPredicate<JavaClass> areCore = resideInAnyPackage("%s.core.."

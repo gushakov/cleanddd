@@ -9,6 +9,8 @@ import java.util.Set;
 public interface PersistenceOperationsOutputPort {
     Integer persist(Course course);
 
+    void rollback();
+
     Course obtainCourseById(Integer courseId);
 
     boolean courseExistsWithTitle(String title);

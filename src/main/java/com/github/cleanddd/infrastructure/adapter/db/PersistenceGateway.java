@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.NoTransactionException;
+import org.springframework.transaction.interceptor.TransactionInterceptor;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.Map;
@@ -31,6 +33,17 @@ public class PersistenceGateway implements PersistenceOperationsOutputPort {
     @Override
     public Integer persist(Course course) {
         return courseRepo.save(dbMapper.map(course)).getId();
+    }
+
+    @Override
+    public void rollback() {
+        // roll back any transaction, if needed
+        // code from: https://stackoverflow.com/a/23502214
+        try {
+            TransactionInterceptor.currentTransactionStatus().setRollbackOnly();
+        } catch (NoTransactionException e) {
+            // do nothing if not running in a transactional context
+        }
     }
 
     @Override

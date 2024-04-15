@@ -23,40 +23,58 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
     @Transactional
     public void createCourse(String title) {
 
-        if (persistenceOps.courseExistsWithTitle(title)) {
-            presenter.presentMessageWhenCreatingNewCourseIfItExistsAlready();
-        } else {
-            final Integer courseId = persistenceOps.persist(Course.builder()
-                    .title(title)
-                    .build());
-
-            presenter.presentResultOfSuccessfulCreationOfNewCourse(courseId);
+        Integer courseId;
+        try {
+            if (persistenceOps.courseExistsWithTitle(title)) {
+                presenter.presentMessageWhenCreatingNewCourseIfItExistsAlready();
+                return;
+            } else {
+                courseId = persistenceOps.persist(Course.builder()
+                        .title(title)
+                        .build());
+            }
+        } catch (Exception e) {
+            presenter.presentError(e);
+            persistenceOps.rollback();
+            return;
         }
+
+        presenter.presentResultOfSuccessfulCreationOfNewCourse(courseId);
+
     }
 
     @Override
     @Transactional
     public void createStudent(String fullName) {
 
-        if (persistenceOps.studentExistsWithFullName(fullName)) {
-            presenter.presentMessageWhenCreatingNewStudentIfSheExistsAlready();
-        } else {
-            final Integer studentId = persistenceOps.persist(Student.builder()
-                    .fullName(fullName)
-                    .build());
-
-            presenter.presentResultOfSuccessfulCreationOfNewStudent(studentId);
+        Integer studentId;
+        try {
+            if (persistenceOps.studentExistsWithFullName(fullName)) {
+                presenter.presentMessageWhenCreatingNewStudentIfSheExistsAlready();
+                return;
+            } else {
+                studentId = persistenceOps.persist(Student.builder()
+                        .fullName(fullName)
+                        .build());
+            }
+        } catch (Exception e) {
+            presenter.presentError(e);
+            persistenceOps.rollback();
+            return;
         }
+
+        presenter.presentResultOfSuccessfulCreationOfNewStudent(studentId);
+
     }
 
     @Transactional
     @Override
     public void enroll(Integer courseId, Integer studentId) {
+        EnrollResult enrollResult;
         try {
-
             // try to enroll the student in the course
             final Student student = persistenceOps.obtainStudentById(studentId);
-            final EnrollResult enrollResult = student.enrollInCourse(courseId);
+            enrollResult = student.enrollInCourse(courseId);
 
             // proceed only if enrollment has actually resulted in a new
             // course added to the set of student's courses
@@ -69,11 +87,15 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
                 persistenceOps.persist(updatedCourse);
             }
 
-            // present the result of enrollment
-            presenter.presentResultOfSuccessfulEnrollment(enrollResult);
         } catch (Exception e) {
+            persistenceOps.rollback();
             presenter.presentError(e);
+            return;
         }
+
+        // present the result of enrollment
+        presenter.presentResultOfSuccessfulEnrollment(enrollResult);
+
     }
 
     @Override
@@ -83,7 +105,8 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
             enrollments = persistenceOps.findEnrollments(studentId);
         } catch (Exception e) {
             presenter.presentError(e);
+            return;
         }
-        presenter.presentResultOfQueryForAllEnrollments(enrollments);
+        presenter.presentResultOfQueryForStudentEnrollments(enrollments);
     }
 }

@@ -18,5 +18,5 @@ public interface EnrollStudentPresenterOutputPort extends ErrorHandlingPresenter
 
     void presentResultOfSuccessfulEnrollment(EnrollResult enrollResult);
 
-    void presentResultOfQueryForAllEnrollments(Set<Enrollment> enrollments);
+    void presentResultOfQueryForStudentEnrollments(Set<Enrollment> enrollments);
 }
