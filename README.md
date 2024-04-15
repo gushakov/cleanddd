@@ -1,6 +1,6 @@
 ## Clean DDD
 
-An example of a Clean architecture DDD application.
+An example of an application combining Clean Architecture and DDD.
 
 Here is [the article](https://medium.com/@gushakov/2236f5430a05) which describes the ideas for this application.
 
