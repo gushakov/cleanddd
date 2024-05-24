@@ -42,7 +42,9 @@ public abstract class AbstractRestPresenter implements ErrorHandlingPresenterOut
         try {
             jacksonConverter.write(content, MediaType.APPLICATION_JSON, httpOutputMessage);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            // not propagating a technical error back to use case
+            // to avoid an error handling loop
+            log.error(e.getMessage(), e);
         }
 
     }
@@ -62,9 +64,10 @@ public abstract class AbstractRestPresenter implements ErrorHandlingPresenterOut
 
             jacksonConverter.write(Map.of("error", String.valueOf(e.getMessage())),
                     MediaType.APPLICATION_JSON, httpOutputMessage);
-        } catch (Exception error) {
-            // should not propagate any errors to the use case
-            log.error(error.getMessage(), e);
+        } catch (IOException ex) {
+            // not propagating a technical error back to use case
+            // to avoid an error handling loop
+            log.error(ex.getMessage(), ex);
         }
 
     }

@@ -4,6 +4,11 @@ An example of an application combining Clean Architecture and DDD.
 
 Here is [the article](https://medium.com/@gushakov/2236f5430a05) which describes the ideas for this application.
 
+### How to run
+
+- start the Postgres database using provided `docker-compose.yml`
+- Swagger UI can be accessed at the URL: http://localhost:8080/swagger-ui/index.html
+
 ### References
 
 Here are some references and links which were used for this application:

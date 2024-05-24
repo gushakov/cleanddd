@@ -17,65 +17,41 @@ public class EnrollStudentPresenter extends AbstractRestPresenter implements Enr
 
     @Override
     public void presentMessageWhenCreatingNewCourseIfItExistsAlready() {
-        try {
-            presentOk(CreateCourseResponse
-                    .builder()
-                    .existsAlready(true)
-                    .build());
-        } catch (Exception e) {
-            presentError(e);
-        }
+        presentOk(CreateCourseResponse
+                .builder()
+                .existsAlready(true)
+                .build());
     }
 
     @Override
     public void presentResultOfSuccessfulCreationOfNewCourse(Integer courseId) {
-        try {
-            presentOk(CreateCourseResponse.builder()
-                    .existsAlready(false)
-                    .courseId(courseId)
-                    .build());
-        } catch (Exception e) {
-            presentError(e);
-        }
+        presentOk(CreateCourseResponse.builder()
+                .existsAlready(false)
+                .courseId(courseId)
+                .build());
     }
 
     @Override
     public void presentMessageWhenCreatingNewStudentIfSheExistsAlready() {
-        try {
-            presentOk(CreateStudentResponse.builder()
-                    .existsAlready(true)
-                    .build());
-        } catch (Exception e) {
-            presentError(e);
-        }
+        presentOk(CreateStudentResponse.builder()
+                .existsAlready(true)
+                .build());
     }
 
     @Override
     public void presentResultOfSuccessfulCreationOfNewStudent(Integer studentId) {
-        try {
-            presentOk(CreateStudentResponse.builder().existsAlready(false)
-                    .studentId(studentId)
-                    .build());
-        } catch (Exception e) {
-            presentError(e);
-        }
+        presentOk(CreateStudentResponse.builder().existsAlready(false)
+                .studentId(studentId)
+                .build());
     }
 
     @Override
     public void presentResultOfSuccessfulEnrollment(EnrollResult enrollResult) {
-        try {
-            presentOk(enrollResult);
-        } catch (Exception e) {
-            presentError(e);
-        }
+        presentOk(enrollResult);
     }
 
     @Override
     public void presentResultOfQueryForStudentEnrollments(Set<Enrollment> enrollments) {
-        try {
-            presentOk(enrollments);
-        } catch (Exception e) {
-            presentError(e);
-        }
+        presentOk(enrollments);
     }
 }

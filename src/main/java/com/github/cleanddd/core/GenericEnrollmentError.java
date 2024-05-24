@@ -5,4 +5,7 @@ public class GenericEnrollmentError extends RuntimeException {
         super(message);
     }
 
+    public GenericEnrollmentError(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -1,8 +1,6 @@
 package com.github.cleanddd.core.port.db;
 
-import com.github.cleanddd.core.GenericEnrollmentError;
-
-public class EntityDoesNotExistError extends GenericEnrollmentError {
+public class EntityDoesNotExistError extends PersistenceError {
     public EntityDoesNotExistError(String message) {
         super(message);
     }
