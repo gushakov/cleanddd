@@ -7,9 +7,20 @@ import com.github.cleanddd.core.model.student.Student;
 import java.util.Set;
 
 public interface PersistenceOperationsOutputPort {
-    Integer persist(Course course);
 
-    void rollback();
+    /**
+     * Executes provided {@linkplain Runnable} in a transaction configured
+     * with default propagation strategy and isolation level.
+     *
+     * @param runnable runnable to execute
+     * @throws PersistenceError if there was a problem setting up or executing
+     *                          a transaction, all other {@linkplain RuntimeException}s
+     *                          which may be thrown by the {@code runnable} itself are
+     *                          propagated to the caller
+     */
+    void doInTransaction(Runnable runnable);
+
+    Integer persist(Course course);
 
     Course obtainCourseById(Integer courseId);
 

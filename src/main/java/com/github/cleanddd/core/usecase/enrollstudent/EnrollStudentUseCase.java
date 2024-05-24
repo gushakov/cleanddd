@@ -5,10 +5,11 @@ import com.github.cleanddd.core.model.enrollment.EnrollResult;
 import com.github.cleanddd.core.model.enrollment.Enrollment;
 import com.github.cleanddd.core.model.student.Student;
 import com.github.cleanddd.core.port.db.PersistenceOperationsOutputPort;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.transaction.Transactional;
 import java.util.Set;
 
+@Slf4j
 public class EnrollStudentUseCase implements EnrollStudentInputPort {
 
     private final EnrollStudentPresenterOutputPort presenter;
@@ -20,11 +21,10 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
     }
 
     @Override
-    @Transactional
     public void createCourse(String title) {
 
-        Integer courseId;
         try {
+            Integer courseId;
             if (persistenceOps.courseExistsWithTitle(title)) {
                 presenter.presentMessageWhenCreatingNewCourseIfItExistsAlready();
                 return;
@@ -33,22 +33,18 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
                         .title(title)
                         .build());
             }
+            presenter.presentResultOfSuccessfulCreationOfNewCourse(courseId);
         } catch (Exception e) {
             presenter.presentError(e);
-            persistenceOps.rollback();
-            return;
         }
-
-        presenter.presentResultOfSuccessfulCreationOfNewCourse(courseId);
 
     }
 
     @Override
-    @Transactional
     public void createStudent(String fullName) {
 
-        Integer studentId;
         try {
+            Integer studentId;
             if (persistenceOps.studentExistsWithFullName(fullName)) {
                 presenter.presentMessageWhenCreatingNewStudentIfSheExistsAlready();
                 return;
@@ -57,21 +53,25 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
                         .fullName(fullName)
                         .build());
             }
+            presenter.presentResultOfSuccessfulCreationOfNewStudent(studentId);
         } catch (Exception e) {
             presenter.presentError(e);
-            persistenceOps.rollback();
-            return;
         }
-
-        presenter.presentResultOfSuccessfulCreationOfNewStudent(studentId);
 
     }
 
-    @Transactional
+    /*
+        Point of interest
+        -----------------
+        We are not using "javax.transaction.Transaction" annotation
+        here. The transactional boundary is drawn tighter, just around
+        the DB updates themselves. This allows to call the presenter
+        outside the transactional boundary.
+     */
     @Override
     public void enroll(Integer courseId, Integer studentId) {
-        EnrollResult enrollResult;
         try {
+            EnrollResult enrollResult;
             // try to enroll the student in the course
             final Student student = persistenceOps.obtainStudentById(studentId);
             enrollResult = student.enrollInCourse(courseId);
@@ -80,21 +80,52 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
             // course added to the set of student's courses
             if (enrollResult.isCourseAdded()) {
 
-                persistenceOps.persist(enrollResult.getStudent());
-
                 final Course course = persistenceOps.obtainCourseById(courseId);
                 final Course updatedCourse = course.enrollStudent();
-                persistenceOps.persist(updatedCourse);
+
+                /*
+                    Point of interest
+                    -----------------
+                    We are saving both aggregate roots in a single transaction.
+                 */
+                persistenceOps.doInTransaction(() -> {
+                    log.debug("[Transaction][Start] Start transaction for enrollment: student with ID {} to course with ID {}",
+                            courseId, studentId);
+
+                    // save student aggregate root, will also save the "enrollment"
+                    // entity (row in "enrollment" table)
+                    persistenceOps.persist(enrollResult.getStudent());
+
+                    /*
+                        Point of interest
+                        -----------------
+                        We can try to provoke an error here to see how transactional boundary
+                        is enforced. We can try running something like: "int t = 1/0;", for
+                        example. Then we can see in the console how the transaction is
+                        rolled back without either a new enrollment or a students counter
+                        in the course being updated.
+                     */
+
+                    // save course aggregate root
+                    persistenceOps.persist(updatedCourse);
+                    log.debug("[Transaction][End] End transaction for enrollment: student with ID {} to course with ID {}",
+                            courseId, studentId);
+                });
             }
 
-        } catch (Exception e) {
-            persistenceOps.rollback();
-            presenter.presentError(e);
-            return;
-        }
+            /*
+                Point of interest
+                -----------------
+                Presentation logic will be executed outside the transaction.
+                We do not want any errors in presentation resulting in
+                a rollback of the transaction.
+             */
 
-        // present the result of enrollment
-        presenter.presentResultOfSuccessfulEnrollment(enrollResult);
+            // present the result of enrollment
+            presenter.presentResultOfSuccessfulEnrollment(enrollResult);
+        } catch (Exception e) {
+            presenter.presentError(e);
+        }
 
     }
 
