@@ -26,16 +26,20 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
     public void createCourse(String title) {
 
         try {
-            Integer courseId;
-            if (persistenceOps.courseExistsWithTitle(title)) {
-                presenter.presentMessageWhenCreatingNewCourseIfItExistsAlready();
-                return;
-            } else {
-                courseId = persistenceOps.persist(Course.builder()
-                        .title(title)
-                        .build());
-            }
-            presenter.presentResultOfSuccessfulCreationOfNewCourse(courseId);
+            txOps.doInTransaction(() -> {
+
+                Integer courseId;
+                if (persistenceOps.courseExistsWithTitle(title)) {
+                    txOps.doAfterCommit(presenter::presentMessageWhenCreatingNewCourseIfItExistsAlready);
+                    return;
+                } else {
+                    courseId = persistenceOps.persist(Course.builder()
+                            .title(title)
+                            .build());
+                }
+                txOps.doAfterCommit(() -> presenter.presentResultOfSuccessfulCreationOfNewCourse(courseId));
+
+            });
         } catch (Exception e) {
             presenter.presentError(e);
         }
@@ -46,16 +50,21 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
     public void createStudent(String fullName) {
 
         try {
-            Integer studentId;
-            if (persistenceOps.studentExistsWithFullName(fullName)) {
-                presenter.presentMessageWhenCreatingNewStudentIfSheExistsAlready();
-                return;
-            } else {
-                studentId = persistenceOps.persist(Student.builder()
-                        .fullName(fullName)
-                        .build());
-            }
-            presenter.presentResultOfSuccessfulCreationOfNewStudent(studentId);
+            txOps.doInTransaction(() -> {
+
+                Integer studentId;
+                if (persistenceOps.studentExistsWithFullName(fullName)) {
+                    txOps.doAfterCommit(presenter::presentMessageWhenCreatingNewStudentIfSheExistsAlready);
+                    return;
+                } else {
+                    studentId = persistenceOps.persist(Student.builder()
+                            .fullName(fullName)
+                            .build());
+                }
+                txOps.doAfterCommit(() -> presenter.presentResultOfSuccessfulCreationOfNewStudent(studentId));
+
+            });
+
         } catch (Exception e) {
             presenter.presentError(e);
         }
