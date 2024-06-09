@@ -35,6 +35,13 @@ public interface TransactionOperationsOutputPort {
     void doInTransaction(boolean readOnly, TransactionRunnableWithoutResult runnableWithoutResult);
 
     /**
+     * @see #doInTransactionWithResult(boolean, TransactionRunnableWithResult)
+     */
+    default <R> R doInTransactionWithResult(TransactionRunnableWithResult<R> runnableWithResult) {
+        return doInTransactionWithResult(false, runnableWithResult);
+    }
+
+    /**
      * Always executes the provided runnable returning the result of the execution. Makes sure
      * the runnable is executed within the currently active transaction if any is available.
      *

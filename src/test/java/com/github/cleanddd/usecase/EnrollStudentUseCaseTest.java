@@ -5,6 +5,7 @@ import com.github.cleanddd.core.model.enrollment.EnrollResult;
 import com.github.cleanddd.core.model.student.Student;
 import com.github.cleanddd.core.port.db.PersistenceOperationsOutputPort;
 import com.github.cleanddd.core.port.transaction.TransactionOperationsOutputPort;
+import com.github.cleanddd.core.port.transaction.TransactionRunnableWithResult;
 import com.github.cleanddd.core.port.transaction.TransactionRunnableWithoutResult;
 import com.github.cleanddd.core.usecase.enrollstudent.EnrollStudentPresenterOutputPort;
 import com.github.cleanddd.core.usecase.enrollstudent.EnrollStudentUseCase;
@@ -56,6 +57,12 @@ public class EnrollStudentUseCaseTest {
             ((TransactionRunnableWithoutResult) invocation.getArgument(0)).run();
             return null;
         }).when(txOps).doInTransaction(any(TransactionRunnableWithoutResult.class));
+
+        lenient().when(txOps.doInTransactionWithResult(any(TransactionRunnableWithResult.class)))
+                .thenAnswer(invocation -> ((TransactionRunnableWithResult<?>) invocation.getArgument(0)).run());
+
+        lenient().when(txOps.doInTransactionWithResult(anyBoolean(), any(TransactionRunnableWithResult.class)))
+                .thenAnswer(invocation -> ((TransactionRunnableWithResult<?>) invocation.getArgument(1)).run());
 
         lenient().doAnswer(invocation -> {
             ((TransactionRunnableWithoutResult) invocation.getArgument(0)).run();
