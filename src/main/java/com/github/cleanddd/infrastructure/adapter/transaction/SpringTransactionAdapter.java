@@ -58,7 +58,7 @@ public class SpringTransactionAdapter implements TransactionOperationsOutputPort
     }
 
     @Override
-    public void doInTransaction(TransactionRunnableWithoutResult runnableWithoutResult, boolean readOnly) {
+    public void doInTransaction(boolean readOnly, TransactionRunnableWithoutResult runnableWithoutResult) {
         log.debug("[Transaction] Executing runnable (without a result) in a transaction, read-only: {}", readOnly);
         if (readOnly) {
             readOnlyTransactionTemplate.executeWithoutResult(transactionStatus -> runnableWithoutResult.run());
@@ -68,7 +68,7 @@ public class SpringTransactionAdapter implements TransactionOperationsOutputPort
     }
 
     @Override
-    public <R> R doInTransactionWithResult(TransactionRunnableWithResult<R> runnableWithResult, boolean readOnly) {
+    public <R> R doInTransactionWithResult(boolean readOnly, TransactionRunnableWithResult<R> runnableWithResult) {
         log.debug("[Transaction] Executing runnable (with a result) in a transaction, read-only: {}", readOnly);
         if (readOnly) {
             return readOnlyTransactionTemplate.execute(transactionStatus -> runnableWithResult.run());

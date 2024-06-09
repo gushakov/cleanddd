@@ -19,31 +19,31 @@ public interface TransactionOperationsOutputPort {
     void rollback();
 
     /**
-     * @see #doInTransaction(TransactionRunnableWithoutResult, boolean)
+     * @see #doInTransaction(boolean, TransactionRunnableWithoutResult)
      */
     default void doInTransaction(TransactionRunnableWithoutResult runnableWithoutResult) {
-        doInTransaction(runnableWithoutResult, false);
+        doInTransaction(false, runnableWithoutResult);
     }
 
     /**
      * Always executes the provided runnable. Makes sure the runnable is executed
      * within the currently active transaction if any is available.
      *
-     * @param runnableWithoutResult a runnable which does not return anything
      * @param readOnly              set to {@code true} if transaction is read-only
+     * @param runnableWithoutResult a runnable which does not return anything
      */
-    void doInTransaction(TransactionRunnableWithoutResult runnableWithoutResult, boolean readOnly);
+    void doInTransaction(boolean readOnly, TransactionRunnableWithoutResult runnableWithoutResult);
 
     /**
      * Always executes the provided runnable returning the result of the execution. Makes sure
      * the runnable is executed within the currently active transaction if any is available.
      *
-     * @param runnableWithResult a runnable with some return object
-     * @param readOnly           set to {@code true} if transaction is read-only
      * @param <R>                any type
+     * @param readOnly           set to {@code true} if transaction is read-only
+     * @param runnableWithResult a runnable with some return object
      * @return object returned by the runnable
      */
-    <R> R doInTransactionWithResult(TransactionRunnableWithResult<R> runnableWithResult, boolean readOnly);
+    <R> R doInTransactionWithResult(boolean readOnly, TransactionRunnableWithResult<R> runnableWithResult);
 
     /**
      * Executes the provided runnable if called outside any transactional context. Otherwise, executes

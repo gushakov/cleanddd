@@ -3,6 +3,7 @@ package com.github.cleanddd.infrastructure.config;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -14,6 +15,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 public class TransactionConfig {
+
+    @Bean
+    @Primary
+    public TransactionTemplate transactionTemplate(PlatformTransactionManager transactionManager) {
+        // default settings for transaction propagation and isolation
+        return new TransactionTemplate(transactionManager);
+    }
 
     @Bean
     @Qualifier("read-only")

@@ -164,13 +164,13 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
 
     @Override
     public void findEnrollmentsForStudent(Integer studentId) {
-        Set<Enrollment> enrollments;
         try {
-            enrollments = persistenceOps.findEnrollments(studentId);
+            txOps.doInTransaction(true, () -> {
+                Set<Enrollment> enrollments = persistenceOps.findEnrollments(studentId);
+                txOps.doAfterCommit(() -> presenter.presentResultOfQueryForStudentEnrollments(enrollments));
+            });
         } catch (Exception e) {
             presenter.presentError(e);
-            return;
         }
-        presenter.presentResultOfQueryForStudentEnrollments(enrollments);
     }
 }
