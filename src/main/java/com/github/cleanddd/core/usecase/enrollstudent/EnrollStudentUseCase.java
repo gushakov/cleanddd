@@ -5,21 +5,22 @@ import com.github.cleanddd.core.model.enrollment.EnrollResult;
 import com.github.cleanddd.core.model.enrollment.Enrollment;
 import com.github.cleanddd.core.model.student.Student;
 import com.github.cleanddd.core.port.db.PersistenceOperationsOutputPort;
+import com.github.cleanddd.core.port.transaction.TransactionOperationsOutputPort;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.transaction.Transactional;
 import java.util.Set;
 
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
 @Slf4j
 public class EnrollStudentUseCase implements EnrollStudentInputPort {
 
-    private final EnrollStudentPresenterOutputPort presenter;
+    EnrollStudentPresenterOutputPort presenter;
+    TransactionOperationsOutputPort txOps;
     private final PersistenceOperationsOutputPort persistenceOps;
-
-    public EnrollStudentUseCase(EnrollStudentPresenterOutputPort presenter, PersistenceOperationsOutputPort persistenceOps) {
-        this.presenter = presenter;
-        this.persistenceOps = persistenceOps;
-    }
 
     @Override
     public void createCourse(String title) {
@@ -64,31 +65,35 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
     /*
         Point of interest
         -----------------
-        We are not using "javax.transaction.Transaction" annotation
-        here. The transactional boundary is drawn tighter, just around
-        the DB updates themselves. This allows to call the presenter
-        outside the transactional boundary.
+        1.  We are not using "org.springframework.transaction.annotation.Transactional"
+            since it would introduce a (source-code) dependency to the
+            outer layer, which is not allowed by the dependencies rule.
+            The following point applies in this case, as well.
+        2.  We are not using "javax.transaction.Transactional" annotation
+            here. The transactional boundary is controlled entirely by
+            the use case itself, because we consider demarcating logic
+            as inherently belonging to the business scenario of the
+            use case.
      */
     @Override
-    @Transactional
     public void enroll(Integer courseId, Integer studentId) {
-        /*
-            Point of interest
-            -----------------
-            We demarcate this use case as transactional since both aggregates:
-            student and course may have to be updated as the result of this use case.
-            We can either use "Transactional" annotation on the method or use the
-            manual demarcation with "doInTransaction()" callback.
-         */
-//        persistenceOps.doInTransaction(() -> {
-//            log.debug("[Transaction][Start] Start transaction for enrollment: student with ID {} to course with ID {}",
-//                    courseId, studentId);
 
-            try {
-                EnrollResult enrollResult;
+        try {
+            /*
+                Point of interest
+                -----------------
+                We manually demarcate this use case with a transactional boundary,
+                since, for the "enrollment" scenario, both aggregates may require
+                updates to their state executed atomically.
+             */
+            txOps.doInTransaction(() -> {
+                // start of transaction
+                log.debug("[Transaction][Start] Start transaction for enrollment: student with ID {} to course with ID {}",
+                        courseId, studentId);
+
                 // try to enroll the student in the course
                 final Student student = persistenceOps.obtainStudentById(studentId);
-                enrollResult = student.enrollInCourse(courseId);
+                EnrollResult enrollResult = student.enrollInCourse(courseId);
 
                 // proceed only if enrollment has actually resulted in a new
                 // course added to the set of student's courses
@@ -117,31 +122,40 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
                 /*
                     Point of interest
                     -----------------
-                    Presentation logic will be executed outside the transaction.
                     Successful outcome will be presented after the commit of
-                    the transaction, exceptional outcome will be presented
-                    after the rollback of the transaction.
-                    We do not want any errors in presentation resulting in
-                    a rollback of the transaction.
+                    the current transaction. We do not want any errors in the
+                    presentation resulting in a rollback of the transaction.
                  */
 
                 // present the result of enrollment, after transaction commit
-                persistenceOps.doAfterCommit(() -> presenter.presentResultOfSuccessfulEnrollment(enrollResult));
+                txOps.doAfterCommit(() -> presenter.presentResultOfSuccessfulEnrollment(enrollResult));
 
-            } catch (Exception e) {
-                // present exceptional outcome, after transaction rollback
-                persistenceOps.doAfterRollback(() -> presenter.presentError(e));
-            }
+                log.debug("[Transaction][End] End transaction for enrollment: student with ID {} to course with ID {}",
+                        courseId, studentId);
+                // end of transaction
+            });
 
-//            log.debug("[Transaction][End] End transaction for enrollment: student with ID {} to course with ID {}",
-//                    courseId, studentId);
-//        });
+        } catch (Exception e) {
+
+            /*
+                Point of interest
+                -----------------
+                We are catching and presenting any errors which were not
+                already presented inside the "doInTransaction()" method
+                above. Thus, this error presentation will happen outside
+                any active transaction and, as such, it will not influence
+                the result of enrollment scenario (any database changes)
+                even in case it fails and throws an exception.
+             */
+
+            presenter.presentError(e);
+        }
 
     }
 
     @Override
     public void findEnrollmentsForStudent(Integer studentId) {
-        Set<Enrollment> enrollments = null;
+        Set<Enrollment> enrollments;
         try {
             enrollments = persistenceOps.findEnrollments(studentId);
         } catch (Exception e) {
