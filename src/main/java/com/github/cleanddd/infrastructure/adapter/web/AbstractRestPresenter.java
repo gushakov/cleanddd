@@ -52,6 +52,14 @@ public abstract class AbstractRestPresenter implements ErrorHandlingPresenterOut
     @Override
     public void presentError(Exception e) {
 
+        /*
+            Point of interest
+            -----------------
+            We can simulate an error in presentation to see how transactional
+            demarcation works.
+            For example, using "int t = 1/0;".
+         */
+
         try {
             final DelegatingServerHttpResponse httpOutputMessage =
                     new DelegatingServerHttpResponse(new ServletServerHttpResponse(httpServletResponse));

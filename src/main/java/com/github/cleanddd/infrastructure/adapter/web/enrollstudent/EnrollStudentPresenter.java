@@ -47,6 +47,14 @@ public class EnrollStudentPresenter extends AbstractRestPresenter implements Enr
 
     @Override
     public void presentResultOfSuccessfulEnrollment(EnrollResult enrollResult) {
+        /*
+            Point of interest
+            -----------------
+            We can simulate an error in presentation to see how transactional
+            demarcation works.
+            For example, using "int t = 1/0;".
+         */
+
         presentOk(enrollResult);
     }
 

@@ -20,6 +20,10 @@ public interface PersistenceOperationsOutputPort {
      */
     void doInTransaction(Runnable runnable);
 
+    void doAfterCommit(Runnable runnable);
+
+    void doAfterRollback(Runnable runnable);
+
     Integer persist(Course course);
 
     Course obtainCourseById(Integer courseId);

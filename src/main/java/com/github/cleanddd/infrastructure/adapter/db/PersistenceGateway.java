@@ -11,12 +11,15 @@ import com.github.cleanddd.infrastructure.adapter.db.enrollment.EnrollmentRow;
 import com.github.cleanddd.infrastructure.adapter.db.map.DbMapper;
 import com.github.cleanddd.infrastructure.adapter.db.student.StudentEntityRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityNotFoundException;
@@ -29,10 +32,13 @@ import java.util.stream.Collectors;
     ----------
 
     1.  Spring, TransactionTemplate: source code and JavaDoc
+    2.  Spring transaction synchronization: https://azagorneanu.blogspot.com/2013/06/transaction-synchronization-callbacks.html
+    3.  Do after commit with Spring transactions: https://stackoverflow.com/questions/15026142/creating-a-post-commit-when-using-transaction-in-spring
  */
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PersistenceGateway implements PersistenceOperationsOutputPort {
 
     final CourseEntityRepository courseRepo;
@@ -48,6 +54,46 @@ public class PersistenceGateway implements PersistenceOperationsOutputPort {
         } catch (TransactionException | Error e) {
             throw new PersistenceError("Error while executing transaction", e);
         }
+    }
+
+    @Override
+    public void doAfterCommit(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            // not in transaction, just execute the runnable
+            log.debug("[Transaction] Not in transaction, executing runnable directly in \"doAfterCommit()\" method");
+            runnable.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == TransactionSynchronization.STATUS_COMMITTED) {
+                    log.debug("[Transaction][After commit] Executing runnable after commit");
+                    runnable.run();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void doAfterRollback(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            // not in transaction, just execute the runnable
+            log.debug("[Transaction] Not in transaction, executing runnable directly in \"doAfterRollback()\" method");
+            runnable.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
+                    log.debug("[Transaction][After rollback] Executing runnable after rollback");
+                    runnable.run();
+                }
+            }
+        });
     }
 
     @Transactional

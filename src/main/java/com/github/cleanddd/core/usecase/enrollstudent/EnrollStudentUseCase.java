@@ -7,6 +7,7 @@ import com.github.cleanddd.core.model.student.Student;
 import com.github.cleanddd.core.port.db.PersistenceOperationsOutputPort;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.transaction.Transactional;
 import java.util.Set;
 
 @Slf4j
@@ -69,32 +70,35 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
         outside the transactional boundary.
      */
     @Override
+    @Transactional
     public void enroll(Integer courseId, Integer studentId) {
-        try {
-            EnrollResult enrollResult;
-            // try to enroll the student in the course
-            final Student student = persistenceOps.obtainStudentById(studentId);
-            enrollResult = student.enrollInCourse(courseId);
+        /*
+            Point of interest
+            -----------------
+            We demarcate this use case as transactional since both aggregates:
+            student and course may have to be updated as the result of this use case.
+            We can either use "Transactional" annotation on the method or use the
+            manual demarcation with "doInTransaction()" callback.
+         */
+//        persistenceOps.doInTransaction(() -> {
+//            log.debug("[Transaction][Start] Start transaction for enrollment: student with ID {} to course with ID {}",
+//                    courseId, studentId);
 
-            // proceed only if enrollment has actually resulted in a new
-            // course added to the set of student's courses
-            if (enrollResult.isCourseAdded()) {
+            try {
+                EnrollResult enrollResult;
+                // try to enroll the student in the course
+                final Student student = persistenceOps.obtainStudentById(studentId);
+                enrollResult = student.enrollInCourse(courseId);
 
-                final Course course = persistenceOps.obtainCourseById(courseId);
-                final Course updatedCourse = course.enrollStudent();
-
-                /*
-                    Point of interest
-                    -----------------
-                    We are saving both aggregate roots in a single transaction.
-                 */
-                persistenceOps.doInTransaction(() -> {
-                    log.debug("[Transaction][Start] Start transaction for enrollment: student with ID {} to course with ID {}",
-                            courseId, studentId);
-
+                // proceed only if enrollment has actually resulted in a new
+                // course added to the set of student's courses
+                if (enrollResult.isCourseAdded()) {
                     // save student aggregate root, will also save the "enrollment"
                     // entity (row in "enrollment" table)
                     persistenceOps.persist(enrollResult.getStudent());
+
+                    final Course course = persistenceOps.obtainCourseById(courseId);
+                    final Course updatedCourse = course.enrollStudent();
 
                     /*
                         Point of interest
@@ -108,24 +112,30 @@ public class EnrollStudentUseCase implements EnrollStudentInputPort {
 
                     // save course aggregate root
                     persistenceOps.persist(updatedCourse);
-                    log.debug("[Transaction][End] End transaction for enrollment: student with ID {} to course with ID {}",
-                            courseId, studentId);
-                });
+                }
+
+                /*
+                    Point of interest
+                    -----------------
+                    Presentation logic will be executed outside the transaction.
+                    Successful outcome will be presented after the commit of
+                    the transaction, exceptional outcome will be presented
+                    after the rollback of the transaction.
+                    We do not want any errors in presentation resulting in
+                    a rollback of the transaction.
+                 */
+
+                // present the result of enrollment, after transaction commit
+                persistenceOps.doAfterCommit(() -> presenter.presentResultOfSuccessfulEnrollment(enrollResult));
+
+            } catch (Exception e) {
+                // present exceptional outcome, after transaction rollback
+                persistenceOps.doAfterRollback(() -> presenter.presentError(e));
             }
 
-            /*
-                Point of interest
-                -----------------
-                Presentation logic will be executed outside the transaction.
-                We do not want any errors in presentation resulting in
-                a rollback of the transaction.
-             */
-
-            // present the result of enrollment
-            presenter.presentResultOfSuccessfulEnrollment(enrollResult);
-        } catch (Exception e) {
-            presenter.presentError(e);
-        }
+//            log.debug("[Transaction][End] End transaction for enrollment: student with ID {} to course with ID {}",
+//                    courseId, studentId);
+//        });
 
     }
 
