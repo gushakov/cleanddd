@@ -15,8 +15,6 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /*
     References:
     ----------
@@ -98,33 +96,10 @@ public class SpringTransactionAdapter implements TransactionOperationsOutputPort
     }
 
     @Override
-    public <R> R doAfterCommitWithResult(TransactionRunnableWithResult<R> runnableWithResult) {
-        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            // not in transaction, just execute the runnable
-            log.debug("[Transaction] Not in transaction, executing runnable (with a result) from \"doAfterCommitWithResult\" directly");
-            return runnableWithResult.run();
-        }
-
-        final AtomicReference<R> result = new AtomicReference<>();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-
-            @Override
-            public void afterCompletion(int status) {
-                if (status == TransactionSynchronization.STATUS_COMMITTED) {
-                    log.debug("[Transaction][After commit] Executing runnable (with a result) after commit");
-                    result.set(runnableWithResult.run());
-                }
-            }
-
-        });
-        return result.get();
-    }
-
-    @Override
     public void doAfterRollback(TransactionRunnableWithoutResult runnableWithoutResult) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            // not in transaction, just execute the runnable
-            log.debug("[Transaction] Not in transaction, executing runnable (without a result) from \"doAfterRollback\" directly");
+            // not in transaction, do not do anything
+            log.debug("[Transaction] Not in transaction, will not do anything");
             runnableWithoutResult.run();
             return;
         }
@@ -138,27 +113,6 @@ public class SpringTransactionAdapter implements TransactionOperationsOutputPort
                 }
             }
         });
-    }
-
-    @Override
-    public <R> R doAfterRollbackWithResult(TransactionRunnableWithResult<R> runnableWithResult) {
-        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            // not in transaction, just execute the runnable
-            log.debug("[Transaction] Not in transaction, executing runnable (with a result) from \"doAfterRollbackWithResult\" directly");
-            return runnableWithResult.run();
-        }
-
-        final AtomicReference<R> result = new AtomicReference<>();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCompletion(int status) {
-                if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
-                    log.debug("[Transaction] Executing runnable (with a result) after rollback");
-                    result.set(runnableWithResult.run());
-                }
-            }
-        });
-        return result.get();
     }
 
 }
